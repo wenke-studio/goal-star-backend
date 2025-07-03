@@ -44,7 +44,7 @@ def retrieve_current_goal(request):
     return 200, {"item": goal}
 
 
-@router.delete("", response={200: DetailSchema, 404: DetailSchema})
+@router.delete("/current", response={200: DetailSchema, 404: DetailSchema})
 def disable_current_goal(request):
     if not Goal.objects.has_active_goal(request.user):
         raise HttpError(404, "No active goal found")
