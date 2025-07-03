@@ -173,3 +173,10 @@ LOGGING = {
         },
     },
 }
+
+
+# Clerk SDK
+# https://github.com/clerk/clerk-sdk-python
+
+PUBLIC_CLERK_PUBLISHABLE_KEY = env.str("PUBLIC_CLERK_PUBLISHABLE_KEY")
+CLERK_SECRET_KEY = env.str("CLERK_SECRET_KEY")  # for bearer_auth
