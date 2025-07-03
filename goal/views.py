@@ -37,11 +37,13 @@ def create_goal(request, goal: GoalCreateSchema):
     "/current", response={200: ObjectSchema[GoalRetrieveSchema], 404: DetailSchema}
 )
 def retrieve_current_goal(request):
-    if not Goal.objects.has_active_goal(request.user):
+    try:
+        goal = Goal.objects.get(
+            user=request.user, status__in=[Goal.Status.ACTIVE, Goal.Status.OVERDUE]
+        )
+        return 200, {"item": goal}
+    except Goal.DoesNotExist:
         raise HttpError(404, "No active goal found")
-
-    goal = Goal.objects.get(user=request.user, status=Goal.Status.ACTIVE)
-    return 200, {"item": goal}
 
 
 @router.delete("/current", response={200: DetailSchema, 404: DetailSchema})
