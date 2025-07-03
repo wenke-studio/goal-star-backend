@@ -13,5 +13,5 @@ class ObjectSchema(Schema, Generic[T]):
     item: T
 
 
-class ErrorSchema(Schema):
+class DetailSchema(Schema):
     detail: str
