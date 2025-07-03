@@ -9,7 +9,9 @@ class AuthBearer(HttpBearer):
     def authenticate(self, request, token):
         try:
             if clerk_id := is_signed_in(request):
-                return User.objects.get(username=clerk_id)
+                user = User.objects.get(username=clerk_id)
+                request.user = user
+                return user  # request.auth by ninja
             raise AuthenticationError()
 
         except User.DoesNotExist:
