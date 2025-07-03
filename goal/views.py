@@ -1,0 +1,66 @@
+from ninja import Router
+from ninja.errors import HttpError
+
+from user.authentication import AuthBearer
+from utils.schemas import ListSchema, ObjectSchema
+
+from .models import Goal
+from .schemas import (
+    GoalCreateSchema,
+    GoalListSchema,
+    GoalRetrieveSchema,
+)
+
+router = Router(tags=["goal"], auth=AuthBearer())
+
+
+@router.get("/", response={200: ListSchema[GoalListSchema]})
+def list_goals(request):
+    goals = Goal.objects.filter(user=request.user)
+    return {"items": goals}
+
+
+@router.post("/")
+def create_goal(request, goal: GoalCreateSchema):
+    if Goal.objects.has_active_goal(request.user):
+        raise HttpError(409, "You already have an active goal")
+
+    goal = Goal.objects.create(
+        **goal.dict(),
+        status=Goal.Status.ACTIVE,
+        user=request.user,
+    )
+    return 201, {"detail": "created"}
+
+
+@router.get("/current", response={200: ObjectSchema[GoalRetrieveSchema]})
+def retrieve_current_goal(request):
+    if not Goal.objects.has_active_goal(request.user):
+        raise HttpError(404, "No active goal found")
+
+    goal = Goal.objects.get(user=request.user, status=Goal.Status.ACTIVE)
+    return 200, {"item": goal}
+
+
+@router.delete("/")
+def disable_current_goal(request):
+    if not Goal.objects.has_active_goal(request.user):
+        raise HttpError(404, "No active goal found")
+
+    goal = Goal.objects.get(user=request.user, status=Goal.Status.ACTIVE)
+    goal.cancel()
+    return 200, {"detail": "Goal disabled"}
+
+
+@router.get("/complete/{token}", auth=None)
+def complete_by_frient(request, token: str):
+    goal = Goal.objects.get(verification_token=token)
+    goal.complete_by_friend()
+    return 200, {"detail": "Goal completed"}
+
+
+@router.patch("/complete")
+def complete_by_self(request):
+    goal = Goal.objects.get(user=request.user, status=Goal.Status.ACTIVE)
+    goal.complete_by_self()
+    return 200, {"detail": "Goal completed"}
